@@ -11,4 +11,3 @@ class FileObjectModel(BaseModel):
     hash_file: Optional[str]
     abs_path_directory: Optional[str]
     abs_path: Optional[str]
-

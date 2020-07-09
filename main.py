@@ -1,13 +1,12 @@
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, Depends
 from motor.motor_asyncio import AsyncIOMotorClient
-
-from file_manager import FileManager
 from starlette.responses import FileResponse
 
+from core.config import UVICORN_HOST, UVICORN_PORT
+from file_manager import FileManager
 from model import FileObjectModel
 from mogodb_base import create_db_client, shutdown_db_client, get_database
-from core.config import UVICORN_HOST, UVICORN_PORT
 
 
 app = FastAPI(title='DrWeb File Storage')
@@ -62,7 +61,6 @@ async def delete_file(file_id_hash: str,
 
 app.add_event_handler("startup", create_db_client)
 app.add_event_handler("shutdown", shutdown_db_client)
-
 
 if __name__ == "__main__":
     uvicorn.run(app=app, host=UVICORN_HOST, port=UVICORN_PORT)

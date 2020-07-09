@@ -68,7 +68,8 @@ class FileManager(object):
         :param conn: AsyncIOMotorClient
         :return FileObjectModel or None
         """
-        description_file = await conn[self.db_name][self.collection_mongo].find_one({'hash_file': hash_file_id})
+        description_file = await conn[self.db_name][self.collection_mongo].find_one(
+            {'hash_file': hash_file_id})
         if description_file:
             file_desc = FileObjectModel(**description_file)
 
@@ -85,7 +86,8 @@ class FileManager(object):
         :param conn: AsyncIOMotorClient
         :return: True or False
         """
-        description_file = await conn[self.db_name][self.collection_mongo].find_one({'hash_file': hash_file_id})
+        description_file = await conn[self.db_name][self.collection_mongo].find_one(
+            {'hash_file': hash_file_id})
         if description_file:
             file_desc = FileObjectModel(**description_file)
             if os.path.exists(file_desc.abs_path):
@@ -102,7 +104,8 @@ class FileManager(object):
                     logger.info(e)
                     logger.info(f"this directory {file_desc.abs_path_directory} is not empty")
 
-                await conn[self.db_name][self.collection_mongo].delete_many({'hash_file': hash_file_id})
+                await conn[self.db_name][self.collection_mongo].delete_many(
+                    {'hash_file': hash_file_id})
                 return True
         logger.info(f"file with hash_file_id {hash_file_id} not in data")
         return False
