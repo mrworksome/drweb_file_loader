@@ -1,5 +1,6 @@
 import hashlib
 import os
+import io
 
 from fastapi import UploadFile
 from loguru import logger
@@ -23,7 +24,7 @@ class FileManager(object):
         Upload file from http and convert name for hash file,
         and save file description in database.
 
-        :param file_obj: UploadFile
+        :param file_obj: UploadFile .file as b'' file
         :param conn: AsyncIOMotorClient
         :return FileObjectModel (save in db)
         """
@@ -31,23 +32,31 @@ class FileManager(object):
         file = FileObjectModel(start_file_name=file_obj.filename,
                                content_type=file_obj.content_type,
                                file_extension=file_obj.filename.split(".")[-1])
-        file_data = file_obj.file.read()
-        hash_file = hashlib.md5(file_data).hexdigest()
+
+        # reed file object b''
+        file_hash = hashlib.md5()
+        file_block = file_obj.file.read(io.DEFAULT_BUFFER_SIZE)
+        while len(file_block) > 0:
+            file_hash.update(file_block)
+            file_block = file_obj.file.read(io.DEFAULT_BUFFER_SIZE)
+
+        hash_file = file_hash.hexdigest()
+
         directory_file = hash_file[0:self.prefix_len_for_directory_file]
         current_directory = os.path.join(self.store_path, directory_file)
 
         if not os.path.exists(current_directory):
             os.makedirs(os.path.join(current_directory))
             logger.info(f"create directory new directory {os.path.join(current_directory)}")
-        with open(os.path.join(self.store_path, directory_file, hash_file), 'w') as f:
 
-            # work for file with extension .txt
-            try:
-                f.write(file_data.decode('utf-8'))
-            except BaseException as e:
-                # if byte 0xff in position 0 use 'utf-16'
-                f.write(file_data.decode('utf-16'))
-                logger.info(e)
+        # return to start file
+        file_obj.file.seek(0)
+
+        with open(os.path.join(self.store_path, directory_file, hash_file), 'wb') as f:
+            file_block = file_obj.file.read(io.DEFAULT_BUFFER_SIZE)
+            while len(file_block) > 0:
+                f.write(file_block)
+                file_block = file_obj.file.read(io.DEFAULT_BUFFER_SIZE)
 
         logger.info(f'file saved in {os.path.join(self.store_path, directory_file, hash_file)}')
         file.abs_path_directory = current_directory
